@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MoodWave · Emotion Music</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #080b12;
+  --surface:   #0e1320;
+  --border:    #1c2540;
+  --accent:    #5effa0;
+  --accent2:   #5ec4ff;
+  --text:      #e8edf8;
+  --muted:     #6b7a9f;
+  --card-r:    18px;
+  --glow:      0 0 40px rgba(94,255,160,.15);
+  --transition: .35s cubic-bezier(.4,0,.2,1);
+  --c-happy:   #ffcc00;
+  --c-sad:     #5ec4ff;
+  --c-angry:   #ff5e5e;
+  --c-neutral: #5effa0;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9999; opacity: .6;
+}
+
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+header {
+  padding: 22px 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(8,11,18,.85);
+}
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.45rem;
+  letter-spacing: -.5px;
+}
+.logo span { color: var(--accent); }
+
+.status-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: .78rem;
+  color: var(--muted);
+}
+.pulse-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:.4; transform:scale(.7); }
+}
+
+main {
+  padding: 32px 36px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-r);
+  overflow: hidden;
+  transition: box-shadow var(--transition);
+}
+.card:hover { box-shadow: var(--glow); }
+
+.card-header {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: .85rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cam-wrap {
+  position: relative;
+  aspect-ratio: 4/3;
+  background: #000;
+  overflow: hidden;
+}
+.cam-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.scan-line {
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  animation: scan 3s linear infinite;
+  pointer-events: none;
+}
+@keyframes scan {
+  0%   { top: 0%;   opacity: 0; }
+  10%  { opacity: .6; }
+  90%  { opacity: .6; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.emotion-display {
+  padding: 28px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.emotion-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Syne', sans-serif;
+  font-size: 2.4rem;
+  font-weight: 800;
+  transition: color .5s;
+}
+.emotion-icon { font-size: 2.2rem; }
+.emotion-badge[data-emotion="Happy"]   { color: var(--c-happy); }
+.emotion-badge[data-emotion="Sad"]     { color: var(--c-sad); }
+.emotion-badge[data-emotion="Angry"]   { color: var(--c-angry); }
+.emotion-badge[data-emotion="Neutral"] { color: var(--c-neutral); }
+
+.conf-bar-wrap { display: flex; flex-direction: column; gap: 8px; }
+.conf-label {
+  font-size: .78rem; color: var(--muted);
+  display: flex; justify-content: space-between;
+}
+.conf-bar {
+  height: 6px; background: var(--border);
+  border-radius: 999px; overflow: hidden;
+}
+.conf-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 999px;
+  width: 0%;
+  transition: width .6s cubic-bezier(.4,0,.2,1);
+}
+
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.info-cell {
+  background: rgba(255,255,255,.03);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px;
+}
+.info-cell-label {
+  font-size: .7rem; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--muted); margin-bottom: 5px;
+}
+.info-cell-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.05rem; font-weight: 600; color: var(--text);
+}
+
+.music-card { grid-column: 1 / -1; }
+.music-inner { padding: 0; height: 152px; overflow: hidden; }
+.music-inner iframe {
+  width: 100%; height: 100%; border: none; display: block;
+  border-radius: 0 0 var(--card-r) var(--card-r);
+}
+.music-label { font-size: .75rem; color: var(--muted); padding: 0 22px 10px; }
+.music-label strong { color: var(--text); }
+
+/* ══════════════════════════════════════════════════════
+   SUGGESTION BANNER
+   ─ slides up from bottom-right corner
+   ─ NO backdrop, NO overlay, NO page freeze
+   ─ everything behind it stays fully clickable
+   ─ auto-dismisses after 8 s if ignored
+══════════════════════════════════════════════════════ */
+.suggestion-banner {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 400;
+  width: 310px;
+
+  /* hidden state */
+  opacity: 0;
+  transform: translateY(24px);
+  pointer-events: none;
+  transition:
+    opacity   0.38s ease,
+    transform 0.38s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.suggestion-banner.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;        /* clickable only when shown */
+}
+
+.suggestion-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.55), var(--glow);
+  overflow: hidden;
+}
+
+.suggestion-top {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.suggest-emoji { font-size: 1.9rem; flex-shrink: 0; line-height: 1; }
+
+.suggest-text {
+  flex: 1;
+  font-size: .83rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.suggest-text strong { color: var(--text); }
+
+/* YES / NO row — side by side, no backdrop */
+.suggestion-btns {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+
+.btn-yes, .btn-no {
+  flex: 1;
+  font-family: 'Syne', sans-serif;
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  border: none;
+  padding: 11px 0;
+  cursor: pointer;
+  background: transparent;
+  transition: background .18s, color .18s;
+}
+
+.btn-yes {
+  color: var(--accent);
+  border-right: 1px solid var(--border);
+}
+.btn-yes:hover { background: rgba(94,255,160,.10); }
+
+.btn-no {
+  color: var(--muted);
+}
+.btn-no:hover { background: rgba(255,255,255,.05); color: var(--text); }
+
+/* thin auto-dismiss progress bar at the very bottom */
+.dismiss-bar {
+  height: 3px;
+  background: var(--border);
+}
+.dismiss-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 0 0 16px 16px;
+}
+.dismiss-fill.running {
+  width: 0%;
+  transition: width 8s linear;
+}
+
+footer {
+  text-align: center;
+  padding: 18px;
+  border-top: 1px solid var(--border);
+  font-size: .75rem;
+  color: var(--muted);
+}
+
+@media (max-width: 760px) {
+  main { grid-template-columns: 1fr; padding: 20px 16px; }
+  .music-card { grid-column: 1; }
+  header { padding: 16px 20px; }
+  .suggestion-banner { right: 12px; bottom: 12px; width: calc(100% - 24px); }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SUGGESTION BANNER — bottom-right, non-blocking
+     The rest of the page stays 100% interactive.
+══════════════════════════════════════════════ -->
+<div class="suggestion-banner" id="suggestionBanner">
+  <div class="suggestion-card">
+    <div class="suggestion-top">
+      <span class="suggest-emoji" id="suggestEmoji">😐</span>
+      <div class="suggest-text" id="suggestText">
+        Mood shifted — switch playlist?
+      </div>
+    </div>
+    <div class="suggestion-btns">
+      <button class="btn-yes" onclick="acceptChange()">Yes, switch</button>
+      <button class="btn-no"  onclick="declineChange()">Keep current</button>
+    </div>
+    <div class="dismiss-bar">
+      <div class="dismiss-fill" id="dismissFill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════════ -->
+<div class="app">
+  <header>
+    <div class="logo">Mood<span>Wave</span></div>
+    <div class="status-pill">
+      <div class="pulse-dot"></div>
+      Live Detection
+    </div>
+  </header>
+
+  <main>
+    <!-- webcam card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Live Feed</span>
+        <span style="font-size:.75rem;color:var(--muted)" id="fpsLabel">––</span>
+      </div>
+      <div class="cam-wrap">
+        <img id="camFeed" src="/video" alt="webcam stream" />
+        <div class="scan-line"></div>
+      </div>
+    </div>
+
+    <!-- emotion info card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Emotion Analysis</span>
+      </div>
+      <div class="emotion-display">
+        <div class="emotion-badge" id="emotionBadge" data-emotion="Neutral">
+          <span class="emotion-icon" id="emotionIcon">😐</span>
+          <span id="emotionLabel">Neutral</span>
+        </div>
+        <div class="conf-bar-wrap">
+          <div class="conf-label">
+            <span>Confidence</span>
+            <span id="confText">0.00</span>
+          </div>
+          <div class="conf-bar">
+            <div class="conf-fill" id="confFill"></div>
+          </div>
+        </div>
+        <div class="info-grid">
+          <div class="info-cell">
+            <div class="info-cell-label">Playing For</div>
+            <div class="info-cell-value" id="activeMusic">Neutral</div>
+          </div>
+          <div class="info-cell">
+            <div class="info-cell-label">Last Update</div>
+            <div class="info-cell-value" id="lastUpdate">–</div>
+          </div>
+          <div class="info-cell">
+            <div class="info-cell-label">Stability</div>
+            <div class="info-cell-value" id="stabilityLabel">Stable</div>
+          </div>
+          <div class="info-cell">
+            <div class="info-cell-label">Poll Rate</div>
+            <div class="info-cell-value">2 s</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- music card -->
+    <div class="card music-card">
+      <div class="card-header">
+        <span class="card-title">🎵 Now Playing</span>
+        <span class="music-label">Playlist for <strong id="musicEmotionLabel">Neutral</strong></span>
+      </div>
+      <div class="music-inner">
+        <iframe
+          id="spotifyFrame"
+          src="{{ playlists['Neutral'] }}"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy"
+          style="border-radius:0 0 18px 18px"
+        ></iframe>
+      </div>
+    </div>
+  </main>
+
+  <footer>MoodWave · Real-time Emotion Music · DeepFace + Flask + OpenCV</footer>
+</div>
+
+<script>
+const PLAYLISTS = {{ playlists | tojson }};
+
+const ICONS = {
+  Happy:   '😄',
+  Sad:     '😢',
+  Angry:   '😠',
+  Neutral: '😐',
+};
+
+let activeEmotion  = 'Neutral';   // what is currently playing
+let pendingEmotion = null;        // emotion waiting for user decision
+let bannerVisible  = false;       // is the banner on screen right now?
+let dismissTimer   = null;        // auto-dismiss timeout handle
+
+// ── DOM refs ──────────────────────────────────────────────
+const banner       = document.getElementById('suggestionBanner');
+const suggestEmoji = document.getElementById('suggestEmoji');
+const suggestText  = document.getElementById('suggestText');
+const dismissFill  = document.getElementById('dismissFill');
+
+// ── show the non-blocking suggestion banner ───────────────
+function showBanner(emotion) {
+  if (bannerVisible) return;          // never stack two banners
+
+  pendingEmotion = emotion;
+  bannerVisible  = true;
+
+  suggestEmoji.textContent = ICONS[emotion] || '😐';
+  suggestText.innerHTML    =
+    `Your mood shifted to <strong>${emotion}</strong>. Switch playlist?`;
+
+  banner.classList.add('visible');
+
+  // restart auto-dismiss progress bar animation
+  dismissFill.classList.remove('running');
+  void dismissFill.offsetWidth;       // force browser reflow so transition restarts
+  dismissFill.classList.add('running');
+
+  // auto-dismiss after 8 s if the user ignores it
+  if (dismissTimer) clearTimeout(dismissTimer);
+  dismissTimer = setTimeout(hideBanner, 8000);
+}
+
+function hideBanner() {
+  banner.classList.remove('visible');
+  bannerVisible  = false;
+  pendingEmotion = null;
+  if (dismissTimer) clearTimeout(dismissTimer);
+}
+
+// called when user clicks "Yes, switch"
+function acceptChange() {
+  if (pendingEmotion) switchPlaylist(pendingEmotion);
+  hideBanner();
+}
+
+// called when user clicks "Keep current"
+function declineChange() {
+  hideBanner();
+}
+
+// ── switch Spotify playlist ───────────────────────────────
+function switchPlaylist(emotion) {
+  document.getElementById('spotifyFrame').src               = PLAYLISTS[emotion] || PLAYLISTS['Neutral'];
+  document.getElementById('activeMusic').textContent        = emotion;
+  document.getElementById('musicEmotionLabel').textContent  = emotion;
+  activeEmotion = emotion;
+}
+
+// ── update emotion display panel ─────────────────────────
+function updateEmotionUI(emotion, confidence) {
+  const badge = document.getElementById('emotionBadge');
+  badge.dataset.emotion = emotion;
+  document.getElementById('emotionIcon').textContent  = ICONS[emotion] || '😐';
+  document.getElementById('emotionLabel').textContent = emotion;
+  document.getElementById('confFill').style.width     = (confidence * 100).toFixed(1) + '%';
+  document.getElementById('confText').textContent     = confidence.toFixed(2);
+  document.getElementById('lastUpdate').textContent   =
+    new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  document.getElementById('stabilityLabel').textContent =
+    confidence >= 0.6 ? 'Stable' : confidence >= 0.4 ? 'Moderate' : 'Unstable';
+}
+
+// ── poll /emotion every 2 seconds ────────────────────────
+async function pollEmotion() {
+  try {
+    const res  = await fetch('/emotion');
+    const data = await res.json();
+    const { emotion, confidence } = data;
+
+    updateEmotionUI(emotion, confidence);
+
+    // Only show banner when:
+    //   1. detected emotion differs from what is currently playing
+    //   2. no banner is already on screen
+    if (emotion !== activeEmotion && !bannerVisible) {
+      showBanner(emotion);
+    }
+  } catch (err) {
+    console.warn('Emotion poll failed:', err);
+  }
+}
+
+// ── FPS counter ───────────────────────────────────────────
+let lastImgTime = Date.now();
+document.getElementById('camFeed').addEventListener('load', () => {
+  const t   = Date.now();
+  const fps = Math.round(1000 / Math.max(1, t - lastImgTime));
+  lastImgTime = t;
+  document.getElementById('fpsLabel').textContent = fps + ' fps';
+});
+
+// ── init ──────────────────────────────────────────────────
+switchPlaylist('Neutral');
+setInterval(pollEmotion, 2000);
+pollEmotion();
+</script>
+</body>
+</html>
